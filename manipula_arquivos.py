@@ -2,6 +2,7 @@ import operator
 from collections import OrderedDict
 
 # PORTO ALEGRE, RS
+# 11465373,11465953,40845451,40846031
 
 class No:
      
@@ -296,6 +297,7 @@ class ProgramaArquivos:
         print("3 - Pesquisa binária por id do tweet")
         print("4 - Pesquisa binária por hashtag")
         print("5 - Pesquisa por local de postagem")
+        print("6 - Pesquisar tweet pelo índice(seek)")
 
         opcao = input()
 
@@ -313,7 +315,11 @@ class ProgramaArquivos:
                 self.pesquisa_binaria_por_hashtag(exibe_tweets=True)
 
             elif opcao == '5':
-                self.arvore()    
+                self.arvore()
+
+            elif opcao == '6':
+                indice = input('Digite o(s) índice(s) que deseja buscar: ')
+                self.seek_file(indice.split(','))
             
             print("Digite o que você deseja fazer:")
             print("0 - Sair")
@@ -322,6 +328,7 @@ class ProgramaArquivos:
             print("3 - Pesquisa binária por id do tweet")
             print("4 - Pesquisa binária por hashtag")
             print("5 - Pesquisa por local de postagem")
+            print("6 - Pesquisar tweet pelo índice(seek)")
             opcao = input()
 
 
