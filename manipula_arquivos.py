@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 # PORTO ALEGRE, RS
 # 11465373,11465953,40845451,40846031
+# '20210517', '20210518', '20210519', '20210520', '20210521', '20210522', '20210523','20210524'
 
 class No:
      
@@ -42,7 +43,6 @@ class Tree:
         if self.root == None:
             return None # se arvore vazia
         atual = self.root # começa a procurar desde raiz
-        print(atual.item.split('|')[0])
         while chave not in atual.item.split('|')[0]: # enquanto nao encontrou
             if chave < atual.item.split('|')[0]:
                 atual = atual.esq # caminha para esquerda
@@ -60,7 +60,41 @@ class Tree:
 
     def caminhar(self):
         print(" Exibindo em ordem: ",end="")
-        self.inOrder(self.root)   
+        self.inOrder(self.root)
+
+class Hash:
+
+    def __init__(self,tam):
+        self.tab = {}
+        self.tam_max = tam
+        self.lista_datas = []
+
+    def cheia(self):
+          return len(self.tab) == self.tam_max
+
+    def insere(self, item):
+        if self.cheia():
+            return
+        pos = len(self.lista_datas)
+        if self.tab.get(pos) == None: # se posicao vazia
+            self.tab[pos] = item
+            self.lista_datas.append(str(item.split('|')[0]))
+        else: # se posicao ocupada
+            print("-> Ocorreu uma colisao na posicao %d" %pos) 
+
+    def imprime(self):
+          for i in self.tab:
+               print("Hash[%d] = " %i, end="")
+               print (self.tab[i])
+
+    def busca(self, chave):
+        pos = self.lista_datas.index(chave)
+        if self.tab.get(pos) == None: # se esta posição não existe
+            return -1 #saida imediata
+        if str(self.tab[pos].split('|')[0]) == str(chave):
+            return self.tab[pos]
+        return -1
+
 
 class ProgramaArquivos:
 
@@ -89,6 +123,7 @@ class ProgramaArquivos:
             print("ID Tweet: " + content[:19] + '\n')
             print("Texto: " + content[19:299] + '\n')
             print("Usuário: " + content[299:319] + '\n')
+            print("Data: " + content[319:327] + '\n')
             print("Localização: " + content[327:377] + '\n')
             print("Hashtags: " + content[377:577] + '\n')
             print('\n')
@@ -99,6 +134,15 @@ class ProgramaArquivos:
         if busca != None:
             print(" Valor Encontrado nos seguintes índices: ")
             print(busca.item.split('|')[1])
+        else:
+            print(" Valor nao encontrado!")
+
+    def hash(self):
+        x = str(input("Digite a data que deseja buscar os tweets: "))
+        busca = self.tabela_hash.busca(str(x))
+        if busca != None:
+            print(" Valor Encontrado nos seguintes índices: ")
+            print(busca.split('|')[1][:2000])
         else:
             print(" Valor nao encontrado!")
         
@@ -165,7 +209,10 @@ class ProgramaArquivos:
             meio = posicao + (tamanho_arquivo-1)/2    
             meio = int(meio)
             linha = arquivo_id.readline(meio)
-            tweet_linha = linha.split('|')[1]
+            try:
+                tweet_linha = linha.split('|')[1]
+            except:
+                pass
 
             if meio == inicio_original or meio < 0: 
                 print("índice não encontrado")
@@ -178,10 +225,10 @@ class ProgramaArquivos:
                     self.seek_file([indice])
                 break
 
-            if int(tweet_linha) > int(id_tweet): 
+            if str(tweet_linha.strip()) > str(id_tweet): 
                 tamanho_arquivo -= 1
             
-            if int(tweet_linha) < int(id_tweet): 
+            if str(tweet_linha.strip()) < str(id_tweet): 
                 posicao += 1
 
         arquivo_id.close()
@@ -193,16 +240,26 @@ class ProgramaArquivos:
         arquivo = open('sort_tweets.txt', 'r', encoding='UTF-8')
         lista_arquivo = []
         dic_arvore = {}
+        dic_hash = {}
+        tamanho_tabela_hash = 0
         while True:
             indice = arquivo.tell()
             linha = arquivo.readline()
 
             # Arvore
-            chave_arvore = linha[327:377]
+            chave_arvore = linha[327:377].strip()
             if not dic_arvore.get(chave_arvore):
                 dic_arvore[chave_arvore] = str(arquivo.tell()) + ','
             else:
-                dic_arvore[chave_arvore] += str(arquivo.tell()) + ','    
+                dic_arvore[chave_arvore] += str(arquivo.tell()) + ','
+
+            # Hash
+            chave_hash = linha[319:327].strip()
+            if not dic_hash.get(chave_hash):
+                dic_hash[chave_hash] = str(arquivo.tell()) + ','
+                tamanho_tabela_hash += 1
+            else:
+                dic_hash[chave_hash] += str(arquivo.tell()) + ',' 
 
             if not linha:
                 break
@@ -218,12 +275,24 @@ class ProgramaArquivos:
             )
 
         arquivo.close()
+
         # Monta arvore binária
         dic_arvore = OrderedDict(sorted(dic_arvore.items()))
         self.tree = Tree()
         count = 0
         for chave, valor in dic_arvore.items():
             self.tree.inserir(str(chave) + '|' + valor[:-1])
+            count += 1
+            if count == 2000:
+                print(chave)
+                break
+
+        # Monta tabela hash
+        dic_hash = OrderedDict(sorted(dic_hash.items()))
+        self.tabela_hash = Hash(tamanho_tabela_hash)
+        count = 0
+        for chave, valor in dic_hash.items():
+            self.tabela_hash.insere(str(chave) + '|' + valor[:-1])
             count += 1
             if count == 2000:
                 print(chave)
@@ -298,6 +367,7 @@ class ProgramaArquivos:
         print("4 - Pesquisa binária por hashtag")
         print("5 - Pesquisa por local de postagem")
         print("6 - Pesquisar tweet pelo índice(seek)")
+        print("7 - Pesquisar por data de postagem")
 
         opcao = input()
 
@@ -320,6 +390,9 @@ class ProgramaArquivos:
             elif opcao == '6':
                 indice = input('Digite o(s) índice(s) que deseja buscar: ')
                 self.seek_file(indice.split(','))
+
+            elif opcao == '7':
+                self.hash()
             
             print("Digite o que você deseja fazer:")
             print("0 - Sair")
@@ -329,6 +402,7 @@ class ProgramaArquivos:
             print("4 - Pesquisa binária por hashtag")
             print("5 - Pesquisa por local de postagem")
             print("6 - Pesquisar tweet pelo índice(seek)")
+            print("7 - Pesquisar por data de postagem")
             opcao = input()
 
 
